@@ -47,7 +47,6 @@ class AccStd(Peer):
                 available_count[piece] += 1
         rarity_list = list(dict(sorted(available_count.items(), key=lambda item: item[1])).keys())
 
-        print("AAAA: ",rarity_list)
         logging.debug("And look, I have my entire history available too:")
         logging.debug("look at the AgentHistory class in history.py for details")
         logging.debug(str(history))
@@ -56,7 +55,7 @@ class AccStd(Peer):
         # Symmetry breaking is good...
         random.shuffle(needed_pieces)
 
-        if history.downloads == []:
+        if len(history.downloads) == 0:
             chosen_peers = []
             for p in peers:
                 if p.available_pieces != [] and len(chosen_peers) <= 2:
@@ -71,20 +70,23 @@ class AccStd(Peer):
             chosen_peers = [peer for peer in peers if peer.id in chosen_peers_ids]
 
         if history.current_round() % 3 == 0:
+            print(history.current_round(), "round")
             self.optimistic_peer = random.choice(peers)
             chosen_peers.append(self.optimistic_peer)
         else:
             chosen_peers.append(self.optimistic_peer)
+        
+        print(chosen_peers, "chosen peers!")
 
         for peer in chosen_peers:
             piece_id = False
             for piece in rarity_list:
-                if piece in peer.available_pieces and piece in np_set:
+                if piece in peer.available_pieces and piece in needed_pieces:
                     piece_id = piece
-            if piece_id:
-                start_block = self.pieces[piece_id]
-                r = Request(self.id, peer.id, piece_id, start_block)
-                requests.append(r)
+                    print(piece, "We need this!")
+                    start_block = self.pieces[piece_id]
+                    r = Request(self.id, peer.id, piece_id, start_block)
+                    requests.append(r)
 
         # Sort peers by id.  This is probably not a useful sort, but other 
         # sorts might be useful
@@ -134,11 +136,9 @@ class AccStd(Peer):
             bws = []
         else:
             logging.debug("Still here: uploading to a random peer")
-            # change my internal state for no reason
-            self.dummy_state["cake"] = "pie"
 
-            request = random.choice(requests)
-            chosen = [request.requester_id]
+            #request = random.choice(requests)
+            chosen = [request.requester_id for request in requests]
             # Evenly "split" my upload bandwidth among the one chosen requester
             bws = even_split(self.up_bw, len(chosen))
 
