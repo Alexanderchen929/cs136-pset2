@@ -4,7 +4,6 @@
 Simulates one file being shared amongst a set of peers.  The file is divided into a set of pieces, each comprised of some number of blocks.  There are two types of peers:
   - seeds, which start with all the pieces.  
   - regular peers, which start with no pieces.
-
 The simulation proceeds in rounds.  In each round, peers can request pieces from other peers, and then decide how much to upload to others.  Once every peer has every piece, the simulation ends.
 """
 
@@ -210,6 +209,7 @@ class Sim:
             requests = requests_to(p.id)
 
             us = p.uploads(requests, remove_me(peer_info), peer_history)
+            p.update_du(peer_history)
             check_uploads(p, us)
             return us
 
@@ -383,7 +383,7 @@ class Sim:
         opt_stddev = optionize(stddev)
         
         for p_id in sorted(self.peer_ids,
-                           key=lambda id: opt_mean(completion_by_id[id])):
+                           key=lambda id: opt_mean(completion_by_id[id]) or 0):
             cs = completion_by_id[p_id]
             logging.warning("%s: %s  (%s)" % (p_id, opt_mean(cs), opt_stddev(cs)))
 
